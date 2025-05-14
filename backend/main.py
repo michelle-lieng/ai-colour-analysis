@@ -30,17 +30,17 @@ class ColourRequest(BaseModel):
     skin: str
 
 @app.post("/analyse")
-async def analyse_colors(colours: ColourRequest):
+async def analyse_colours(colours: ColourRequest):
     prompt = f"""
-            You are a professional color consultant. Based on the client's features:
+            You are a professional colour consultant. Based on the client's features:
 
-            - Eye color hex: {colours.eye}
-            - Hair color hex: {colours.hair}
+            - Eye colour hex: {colours.eye}
+            - Hair colour hex: {colours.hair}
             - Skin tone hex: {colours.skin}
 
-            Determine the most likely seasonal color type (e.g. Soft Autumn, Cool Winter, etc.), and explain:
+            Determine the most likely seasonal colour type (e.g. Soft Autumn, Cool Winter, etc.), and explain:
             - Why that season fits
-            - What clothing or makeup colors will suit them best
+            - What clothing or makeup colours will suit them best
             Keep the explanation human-friendly and warm.
             """
 

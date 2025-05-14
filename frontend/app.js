@@ -1,24 +1,66 @@
+// State variables to store selected colors
 let eyeHex = null;
 let hairHex = null;
 let skinHex = null;
-let clickCount = 0; // this keeps track of how many points have been selected
+let currentSelection = 'eye';
 
+// DOM elements we'll use frequently
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const upload = document.getElementById("upload");
 const analyseBtn = document.getElementById("analyse-btn");
 const result = document.getElementById("result");
 
-// when the user uploads an image: 
-upload.addEventListener("change", function(e) {
-  const file = e.target.files[0]; // get uploaded file
-  const img = new Image(); // create new image element
+// Remove unused clickCount variable since we're using currentSelection instead
 
-  // resize the image to fix the max width provided for display
+/**
+ * Resets all color previews to their default state
+ */
+function resetColourPreviews() {
+  ['eye-preview', 'hair-preview', 'skin-preview'].forEach(id => {
+    updateColourPreview(id, '#ffffff');
+    document.getElementById(id).querySelector('.hex-code').textContent = 'Not selected';
+  });
+}
+
+/**
+ * Updates the visual preview of a selected color
+ */
+function updateColourPreview(elementId, hexColour) {
+  const preview = document.getElementById(elementId);
+  const dot = preview.querySelector('.colour-dot');
+  const hexCode = preview.querySelector('.hex-code');
+  
+  dot.style.backgroundColor = hexColour;
+  hexCode.textContent = hexColour;
+  
+  // Add click-to-copy functionality
+  preview.querySelector('.colour-info').onclick = () => {
+    navigator.clipboard.writeText(hexColour);
+    const originalText = hexCode.textContent;
+    hexCode.textContent = 'Copied!';
+    setTimeout(() => hexCode.textContent = originalText, 1000);
+  };
+}
+
+/**
+ * Converts RGB values to hex color code
+ */
+function rgbToHex(r, g, b) {
+  return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+}
+
+/**
+ * Handles image upload and display
+ */
+upload.addEventListener("change", function(e) {
+  const file = e.target.files[0]; 
+  const img = new Image(); 
+
   img.onload = function () {
+    // Resize image for display while maintaining aspect ratio
     const MAX_WIDTH = 600;
     const scaleFactor = Math.min(1, MAX_WIDTH / img.width);
-  
     const scaledWidth = img.width * scaleFactor;
     const scaledHeight = img.height * scaleFactor;
   
@@ -26,61 +68,78 @@ upload.addEventListener("change", function(e) {
     canvas.height = scaledHeight;
     ctx.drawImage(img, 0, 0, scaledWidth, scaledHeight);
   
-    // reset state for new analysis
-    clickCount = 0;
+    // Reset all state
     eyeHex = hairHex = skinHex = null;
-    analyseBtn.disabled = true; // disable analyse button until all 3 colours selected
+    analyseBtn.disabled = true;
     result.textContent = "Waiting for input...";
+    resetColourPreviews();
   };
 
-  // load image from uploaded file
   img.src = URL.createObjectURL(file);
 });
 
-// when user clicks on canvas to pick a colour 
-canvas.addEventListener("click", function(e) {
-  if (clickCount >= 3) return;
-
-  // get coordinants of clicks relevant to the canvas 
+/**
+ * Handles color picking when canvas is clicked
+ */
+canvas.addEventListener('click', function(e) {
+  // Calculate exact pixel coordinates accounting for canvas scaling
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const pixelX = Math.floor(x * scaleX);
+  const pixelY = Math.floor(y * scaleY);
+  
+  // Get color at clicked point
+  const pixel = ctx.getImageData(pixelX, pixelY, 1, 1).data;
+  const hex = rgbToHex(pixel[0], pixel[1], pixel[2]);
+  
+  // Update the appropriate preview based on current selection
+  const previewMap = {
+    'eye': () => eyeHex = hex,
+    'hair': () => hairHex = hex,
+    'skin': () => skinHex = hex
+  };
 
-  // get pixel colour at that point 
-  const pixel = ctx.getImageData(x, y, 1, 1).data;
-  const hex = "#" + ((1 << 24) + (pixel[0] << 16) + (pixel[1] << 8) + pixel[2]).toString(16).slice(1).toUpperCase();
-
-  // save colour value and alert user based on which click this is
-  if (clickCount === 0) {
-    eyeHex = hex;
-    alert("Eye color selected: " + hex);
-  } else if (clickCount === 1) {
-    hairHex = hex;
-    alert("Hair color selected: " + hex);
-  } else if (clickCount === 2) {
-    skinHex = hex;
-    alert("Skin color selected: " + hex);
-    analyseBtn.disabled = false;
-  }
-
-  clickCount++;
+  previewMap[currentSelection]?.();
+  updateColourPreview(`${currentSelection}-preview`, hex);
+  
+  // Enable analyse button if all colours are selected
+  analyseBtn.disabled = !(eyeHex && hairHex && skinHex);
 });
 
-// when the user clicks analyse my colours 
+/**
+ * Handles the analysis request when analyse button is clicked
+ */
 analyseBtn.addEventListener("click", async function() {
   if (!eyeHex || !hairHex || !skinHex) return;
 
-  result.textContent = "Analysing..."; //updates the UI
+  result.textContent = "Analysing...";
 
-  // send colour data to backend API (fastapi running locally)
-  const res = await fetch("http://localhost:8000/analyse", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ eye: eyeHex, hair: hairHex, skin: skinHex })
+  try {
+    const res = await fetch("http://localhost:8000/analyse", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eye: eyeHex, hair: hairHex, skin: skinHex })
+    });
+
+    const data = await res.json();
+    result.textContent = data.analysis;
+  } catch (error) {
+    result.textContent = "Error analyzing colors. Please try again.";
+  }
+});
+
+/**
+ * Sets up color selection button functionality
+ */
+document.querySelectorAll('.select-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    // Update active selection state
+    document.querySelectorAll('.colour-selection').forEach(el => el.classList.remove('active'));
+    const parent = btn.closest('.colour-selection');
+    parent.classList.add('active');
+    currentSelection = parent.dataset.target;
   });
-
-  const data = await res.json(); // wait for backend response
-
-  
-  result.textContent = data.analysis;
 });

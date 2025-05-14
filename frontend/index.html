@@ -2,28 +2,73 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
-    <title>Color Analysis App</title>
+    <title>Colour Analysis App</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <h1>AI Colour Analysis</h1>
-    <div class="file-input-wrapper">
-      <input type="file" accept="image/*" id="upload" />
+
+    <div class="section-left">
+      <p>Please upload a photo of yourself in good lighting.</p>
+      <div class="file-input-wrapper">
+        <input type="file" accept="image/*" id="upload" />
+      </div>
+      <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+      </div>
     </div>
-    <div class="canvas-container">
-      <canvas id="canvas"></canvas>
+
+    <div class="section-right">
+      <div class="colour-selectors">
+        <div class="colour-selection active" data-target="eye">
+          <button class="select-btn">
+            <span class="icon">👁️</span>
+            <span>Select Eye Colour</span>
+          </button>
+          <div class="colour-preview" id="eye-preview">
+            <div class="colour-info">
+              <span class="colour-dot"></span>
+              <span class="hex-code">Not selected</span>
+            </div>
+          </div>
+        </div>
+    
+        <div class="colour-selection" data-target="hair">
+          <button class="select-btn">
+            <span class="icon">💇</span>
+            <span>Select Hair Colour</span>
+          </button>
+          <div class="colour-preview" id="hair-preview">
+            <div class="colour-info">
+              <span class="colour-dot"></span>
+              <span class="hex-code">Not selected</span>
+            </div>
+          </div>
+        </div>
+    
+        <div class="colour-selection" data-target="skin">
+          <button class="select-btn">
+            <span class="icon">👆</span>
+            <span>Select Skin Tone</span>
+          </button>
+          <div class="colour-preview" id="skin-preview">
+            <div class="colour-info">
+              <span class="colour-dot"></span>
+              <span class="hex-code">Not selected</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div id="color-points">
-      <p>Click on the image to select:</p>
-      <p><strong>1st click</strong> = Eye colour</p>
-      <p><strong>2nd click</strong> = Hair colour</p>
-      <p><strong>3rd click</strong> = Skin tone</p>
+
+    <div class="section-bottom">
+      <button id="analyse-btn" disabled>Analyse My Colours</button>
+      <div id="result-box">
+        <h2>Your Colour Analysis</h2>
+        <p id="result">Waiting for input...</p>
+      </div>
     </div>
-    <button id="analyse-btn" disabled>Analyse My Colours</button>
-    <div id="result-box">
-      <h2>Your Colour Analysis</h2>
-      <p id="result">Waiting for input...</p>
-    </div>
+    
     <script src="app.js"></script>
   </body>
 </html>
