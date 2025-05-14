@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Colour Analysis App is a simple web application that allows users to take a picture and analyse the colors of their eyes, hair, and skin. The app extracts the color hex codes from the image and provides a detailed color analysis using a language model.
+The Colour Analysis App is a simple web application that allows users to take a picture and analyse the colors of their eyes, hair, and skin. The app extracts the color hex codes from the image and provides a detailed color analysis using a language model [at the moment using gemini-2.0-flash].
 
 ## Demo
 
